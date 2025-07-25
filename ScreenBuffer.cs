@@ -2,8 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Linq;
 
-using static Console.Kernel32;
-using SysConsole = System.Console;
+using static Win32.Kernel32;
 
 namespace Console {
 
@@ -15,6 +14,51 @@ namespace Console {
   public class ScreenBuffer {
 
     private IntPtr handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    public bool AssignHandle() {
+
+      IntPtr newHandle = CreateConsoleScreenBuffer(
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        IntPtr.Zero,
+        CONSOLE_TEXTMODE_BUFFER,
+        IntPtr.Zero
+      );
+
+      if (newHandle == INVALID_HANDLE_VALUE) {
+        return false;
+      }
+
+      var info = GetBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE));
+
+      SetBufferInfoEx(newHandle, info);
+
+      if (!SetConsoleActiveScreenBuffer(newHandle)) {
+        CloseHandle(newHandle);
+        return false;
+      }
+
+      handle = newHandle;
+      return true;
+    }
+
+    public bool Activate() {
+      return SetConsoleActiveScreenBuffer(handle);
+    }
+
+    public bool IsActive() {
+      IntPtr activeHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+      return handle == activeHandle;
+    }
+
+    public bool Close() {
+      if (handle != IntPtr.Zero && handle != INVALID_HANDLE_VALUE) {
+        bool result = CloseHandle(handle);
+        handle = IntPtr.Zero;
+        return result;
+      }
+      return true;
+    }
 
     public bool Write(string text) {
       if (text == null) return false;
@@ -71,16 +115,12 @@ namespace Console {
 
     }
 
-    private CONSOLE_SCREEN_BUFFER_INFO GetInfo() {
-      return GetScreenBufferInfo(handle);
-    }
-
     public short Width {
-      get => GetInfo().dwSize.Y;
+      get => GetBufferInfo(handle).dwSize.Y;
     }
 
     public short Height {
-      get => GetInfo().dwSize.X;
+      get => GetBufferInfo(handle).dwSize.X;
     }
 
     private CHAR_INFO[] pasteAreaBuffer;
@@ -123,7 +163,6 @@ namespace Console {
     public bool PasteAreaAt(short row, short col, [Optional, DefaultParameterValue(0L)] long targetScreenBufferHandle) {
 
       if (pasteAreaBuffer == null || pasteAreaBuffer.Length == 0 || pasteAreaWidth == 0 || pasteAreaHeight == 0) {
-        SysConsole.WriteLine("mal la paste area {0} {1} {2}", pasteAreaBuffer.Length, pasteAreaWidth, pasteAreaHeight);
         return false;
       }
 
@@ -162,8 +201,6 @@ namespace Console {
 
       if (expectedTotalLength == 0) {
 
-        SysConsole.WriteLine("vuelve antes");
-
         pasteAreaBuffer = null;
         pasteAreaWidth = 0;
         pasteAreaHeight = 0;
@@ -188,7 +225,7 @@ namespace Console {
       if (defaultAttrs.HasValue) {
         actualDefaultAttrs = defaultAttrs.Value;
       } else {
-        actualDefaultAttrs = (ushort)GetInfo().wAttributes;
+        actualDefaultAttrs = (ushort)GetBufferInfo(handle).wAttributes;
       }
 
       pasteAreaBuffer = new CHAR_INFO[expectedTotalLength];
@@ -212,7 +249,6 @@ namespace Console {
       }
 
       return true;
-
     }
 
     public bool SetPasteAreaChars(string charData, [Optional, DefaultParameterValue((short)0)] short row, [Optional, DefaultParameterValue((short)0)] short col) {
