@@ -115,12 +115,59 @@ namespace Console {
 
     }
 
+    public bool SetAttrsAt(short row, short column, short attrValue, int length) {
+      if (column < 0 || row < 0 || column >= Width || row >= Height) {
+        return false;
+      }
+
+      int attrsFitOnRow = Width - column;
+      uint attrsToWrite = (uint)Math.Min(length, attrsFitOnRow);
+
+      if (attrsToWrite <= 0) {
+        return true;
+      }
+
+      ushort[] attrs = new ushort[attrsToWrite];
+      for (int i = 0; i < attrsToWrite; i++) {
+        attrs[i] = (ushort)attrValue;
+      }
+
+      COORD dwWriteCoord = new COORD(column, row);
+      uint lpNumberOfAttrsWritten;
+
+      return WriteConsoleOutputAttribute(
+        handle,
+        attrs,
+        attrsToWrite,
+        dwWriteCoord,
+        out lpNumberOfAttrsWritten
+      );
+    }
+
+    public bool WriteTextWithAttrs(short row, short column, string text, short attrValue) {
+      if (text == null) return false;
+      
+      bool charsResult = SetCharsAt(row, column, text);
+      bool attrsResult = SetAttrsAt(row, column, attrValue, text.Length);
+      
+      return charsResult && attrsResult;
+    }
+
     public short Width {
       get => GetBufferInfo(handle).dwSize.Y;
     }
 
     public short Height {
       get => GetBufferInfo(handle).dwSize.X;
+    }
+
+    public short TextAttributes {
+      get => GetBufferInfo(handle).wAttributes;
+      set => SetConsoleTextAttribute(handle, (ushort)value);
+    }
+
+    public IntPtr Handle {
+      get => handle;
     }
 
     private CHAR_INFO[] pasteAreaBuffer;
