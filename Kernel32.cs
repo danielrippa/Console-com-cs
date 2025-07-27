@@ -223,6 +223,154 @@ namespace Win32 {
     [DllImport(Dll, SetLastError = true)]
     internal static extern bool SetConsoleWindowInfo(IntPtr hConsoleOutput, bool bAbsolute, ref SMALL_RECT lpConsoleWindow);
 
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern IntPtr GetConsoleWindow();
+
+    // Console input mode constants
+    internal const uint ENABLE_PROCESSED_INPUT = 0x0001;
+    internal const uint ENABLE_LINE_INPUT = 0x0002;
+    internal const uint ENABLE_ECHO_INPUT = 0x0004;
+    internal const uint ENABLE_WINDOW_INPUT = 0x0008;
+    internal const uint ENABLE_MOUSE_INPUT = 0x0010;
+    internal const uint ENABLE_INSERT_MODE = 0x0020;
+    internal const uint ENABLE_QUICK_EDIT_MODE = 0x0040;
+
+    // Console event types
+    internal const uint KEY_EVENT = 0x0001;
+    internal const uint MOUSE_EVENT = 0x0002;
+    internal const uint WINDOW_BUFFER_SIZE_EVENT = 0x0004;
+    internal const uint FOCUS_EVENT = 0x0010;
+
+    // Mouse event flags
+    internal const uint MOUSE_MOVED = 0x0001;
+    internal const uint DOUBLE_CLICK = 0x0002;
+    internal const uint MOUSE_WHEELED = 0x0004;
+    internal const uint MOUSE_HWHEELED = 0x0008;
+
+    // Control key states
+    internal const uint CAPSLOCK_ON = 0x0080;
+    internal const uint ENHANCED_KEY = 0x0100;
+    internal const uint LEFT_ALT_PRESSED = 0x0002;
+    internal const uint LEFT_CTRL_PRESSED = 0x0008;
+    internal const uint NUMLOCK_ON = 0x0020;
+    internal const uint RIGHT_ALT_PRESSED = 0x0001;
+    internal const uint RIGHT_CTRL_PRESSED = 0x0004;
+    internal const uint SCROLLLOCK_ON = 0x0040;
+    internal const uint SHIFT_PRESSED = 0x0010;
+
+    // Mouse button states
+    internal const uint FROM_LEFT_1ST_BUTTON_PRESSED = 0x0001;
+    internal const uint FROM_LEFT_2ND_BUTTON_PRESSED = 0x0004;
+    internal const uint FROM_LEFT_3RD_BUTTON_PRESSED = 0x0008;
+    internal const uint FROM_LEFT_4TH_BUTTON_PRESSED = 0x0010;
+    internal const uint RIGHTMOST_BUTTON_PRESSED = 0x0002;
+
+    [DllImport(Dll)]
+    internal static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+
+    [DllImport(Dll)]
+    internal static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+
+    [DllImport(Dll)]
+    internal static extern bool GetNumberOfConsoleInputEvents(IntPtr hConsoleInput, ref uint lpcNumberOfEvents);
+
+    [DllImport(Dll)]
+    internal static extern bool PeekConsoleInput(IntPtr hConsoleInput, ref INPUT_RECORD lpBuffer, uint nLength, ref uint lpNumberOfEventsRead);
+
+    [DllImport(Dll)]
+    internal static extern bool ReadConsoleInput(IntPtr hConsoleInput, ref INPUT_RECORD lpBuffer, uint nLength, ref uint lpNumberOfEventsRead);
+
+    [DllImport(Dll)]
+    internal static extern uint GetConsoleCP();
+
+    [DllImport(Dll)]
+    internal static extern bool SetConsoleCP(uint wCodePageID);
+
+    // Input record structures
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct INPUT_RECORD {
+        [FieldOffset(0)]
+        public uint EventType;
+        [FieldOffset(4)]
+        public KEY_EVENT_RECORD KeyEvent;
+        [FieldOffset(4)]
+        public MOUSE_EVENT_RECORD MouseEvent;
+        [FieldOffset(4)]
+        public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+        [FieldOffset(4)]
+        public FOCUS_EVENT_RECORD FocusEvent;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct KEY_EVENT_RECORD {
+        public bool bKeyDown;
+        public ushort wRepeatCount;
+        public ushort wVirtualKeyCode;
+        public ushort wVirtualScanCode;
+        public KEY_EVENT_CHAR_UNION uChar;
+        public uint dwControlKeyState;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct KEY_EVENT_CHAR_UNION {
+        [FieldOffset(0)]
+        public char UnicodeChar;
+        [FieldOffset(0)]
+        public byte AsciiChar;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MOUSE_EVENT_RECORD {
+        public COORD dwMousePosition;
+        public uint dwButtonState;
+        public uint dwControlKeyState;
+        public uint dwEventFlags;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WINDOW_BUFFER_SIZE_RECORD {
+        public COORD dwSize;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct FOCUS_EVENT_RECORD {
+        public bool bSetFocus;
+    }
+
+    // Helper function for extracting high word from DWORD
+    internal static ushort HiWord(int dword) {
+        return (ushort)((dword >> 16) & 0xFFFF);
+    }
+
+    // Cursor-related structures and functions
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CONSOLE_CURSOR_INFO {
+        public uint dwSize;
+        public bool bVisible;
+    }
+
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern bool SetConsoleCursorPosition(IntPtr hConsoleOutput, COORD dwCursorPosition);
+
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern bool GetConsoleCursorInfo(IntPtr hConsoleOutput, out CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
+
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern bool SetConsoleCursorInfo(IntPtr hConsoleOutput, ref CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
+
+    internal static CONSOLE_CURSOR_INFO GetCursorInfo(IntPtr handle) {
+        GetConsoleCursorInfo(handle, out var info);
+        return info;
+    }
+
+    internal static CONSOLE_SCREEN_BUFFER_INFO GetScreenBufferInfo(IntPtr handle) {
+        GetConsoleScreenBufferInfo(handle, out var info);
+        return info;
+    }
+
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern bool SetConsoleTextAttribute(IntPtr hConsoleOutput, ushort wAttributes);
+
   }
 
 }
