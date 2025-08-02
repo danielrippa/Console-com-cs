@@ -29,15 +29,6 @@ namespace Console {
         return false;
       }
 
-      var info = GetBufferInfoEx(GetStdHandle(STD_OUTPUT_HANDLE));
-
-      SetBufferInfoEx(newHandle, info);
-
-      if (!SetConsoleActiveScreenBuffer(newHandle)) {
-        CloseHandle(newHandle);
-        return false;
-      }
-
       handle = newHandle;
       return true;
     }
