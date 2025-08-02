@@ -180,7 +180,8 @@ namespace Console {
           keyEvent.ScanCode = keyEventDetails.wVirtualScanCode;
           keyEvent.KeyCode = keyEventDetails.wVirtualKeyCode;
           keyEvent.UnicodeChar = keyEventDetails.uChar.UnicodeChar;
-          keyEvent.AsciiChar = keyEventDetails.uChar.AsciiChar;
+          keyEvent.AsciiCharCode = keyEventDetails.uChar.AsciiChar;
+          keyEvent.AsciiChar = (char)keyEventDetails.uChar.AsciiChar;
           keyEvent.ControlKeyState = keyEventDetails.dwControlKeyState;
           keyEvent.ControlKeys = GetControlKeys(keyEventDetails.dwControlKeyState);
 
@@ -252,6 +253,12 @@ namespace Console {
 
             switch (mouseEventType) {
               case MouseEventType.DoubleClick:
+                return new {
+                  type = "MouseDoubleClick",
+                  cursorLocation,
+                  buttons = GetMouseButtonsDetails(((MouseButtonClickedEvent)mouseEvent).Buttons),
+                  controlKeys
+                };
               case MouseEventType.SingleClick:
                 return new {
                   type = "MouseClick",
@@ -330,8 +337,9 @@ namespace Console {
             scanCode = keyEvent.ScanCode,
             keyCode = keyEvent.KeyCode,
             unicodeChar = keyEvent.UnicodeChar,
-            asciiChar = keyEvent.AsciiChar,
-            asciiCharString = keyEvent.AsciiChar > 0 && keyEvent.AsciiChar < 127 ? ((char)keyEvent.AsciiChar).ToString() : "",
+            unicodeCharCode = (int)keyEvent.UnicodeChar,
+            asciiCharCode = (int)keyEvent.AsciiCharCode,
+            asciiChar = keyEvent.AsciiCharCode > 0 && keyEvent.AsciiCharCode < 127 ? keyEvent.AsciiChar.ToString() : "",
             repetitions = keyEvent is PressedKeyEvent pressedKeyEvent ? pressedKeyEvent.Repetitions : (int?)null,
             keyType = GetKeyType(keyEvent.KeyCode),
             shiftPressed = IsModifierKeyPressed(0x10, keyEvent.ControlKeyState),
@@ -511,7 +519,8 @@ namespace Console {
       public int ScanCode { get; set; }
       public int KeyCode { get; set; }
       public char UnicodeChar { get; set; }
-      public byte AsciiChar { get; set; }
+      public byte AsciiCharCode { get; set; }
+      public char AsciiChar { get; set; }
       public uint ControlKeyState { get; set; }
     }
 
