@@ -303,7 +303,8 @@ namespace Win32 {
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct KEY_EVENT_RECORD {
-        public bool bKeyDown;
+        [MarshalAs(UnmanagedType.I4)]
+        public int bKeyDown;
         public ushort wRepeatCount;
         public ushort wVirtualKeyCode;
         public ushort wVirtualScanCode;
