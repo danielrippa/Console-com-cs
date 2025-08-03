@@ -115,12 +115,10 @@ namespace Win32 {
           throw new System.ComponentModel.Win32Exception(error, $"Failed to get console screen buffer info extended. Error: {error}");
       }
 
-      // --- Always correct buffer size to fit window ---
       short winWidth = (short)(infoEx.srWindow.Right - infoEx.srWindow.Left + 1);
       short winHeight = (short)(infoEx.srWindow.Bottom - infoEx.srWindow.Top + 1);
       if (infoEx.dwSize.X < winWidth) infoEx.dwSize.X = winWidth;
       if (infoEx.dwSize.Y < winHeight) infoEx.dwSize.Y = winHeight;
-      // ------------------------------------------------
 
       return infoEx;
 
@@ -226,7 +224,6 @@ namespace Win32 {
     [DllImport(Dll, SetLastError = true)]
     internal static extern IntPtr GetConsoleWindow();
 
-    // Console input mode constants
     internal const uint ENABLE_PROCESSED_INPUT = 0x0001;
     internal const uint ENABLE_LINE_INPUT = 0x0002;
     internal const uint ENABLE_ECHO_INPUT = 0x0004;
@@ -235,19 +232,16 @@ namespace Win32 {
     internal const uint ENABLE_INSERT_MODE = 0x0020;
     internal const uint ENABLE_QUICK_EDIT_MODE = 0x0040;
 
-    // Console event types
     internal const uint KEY_EVENT = 0x0001;
     internal const uint MOUSE_EVENT = 0x0002;
     internal const uint WINDOW_BUFFER_SIZE_EVENT = 0x0004;
     internal const uint FOCUS_EVENT = 0x0010;
 
-    // Mouse event flags
     internal const uint MOUSE_MOVED = 0x0001;
     internal const uint DOUBLE_CLICK = 0x0002;
     internal const uint MOUSE_WHEELED = 0x0004;
     internal const uint MOUSE_HWHEELED = 0x0008;
 
-    // Control key states
     internal const uint CAPSLOCK_ON = 0x0080;
     internal const uint ENHANCED_KEY = 0x0100;
     internal const uint LEFT_ALT_PRESSED = 0x0002;
@@ -258,7 +252,20 @@ namespace Win32 {
     internal const uint SCROLLLOCK_ON = 0x0040;
     internal const uint SHIFT_PRESSED = 0x0010;
 
-    // Mouse button states
+    [Flags]
+    public enum ControlKeyState : uint
+    {
+        RIGHT_ALT_PRESSED = 0x0001,
+        LEFT_ALT_PRESSED = 0x0002,
+        RIGHT_CTRL_PRESSED = 0x0004,
+        LEFT_CTRL_PRESSED = 0x0008,
+        SHIFT_PRESSED = 0x0010,
+        NUMLOCK_ON = 0x0020,
+        SCROLLLOCK_ON = 0x0040,
+        CAPSLOCK_ON = 0x0080,
+        ENHANCED_KEY = 0x0100
+    }
+
     internal const uint FROM_LEFT_1ST_BUTTON_PRESSED = 0x0001;
     internal const uint FROM_LEFT_2ND_BUTTON_PRESSED = 0x0004;
     internal const uint FROM_LEFT_3RD_BUTTON_PRESSED = 0x0008;
@@ -286,39 +293,41 @@ namespace Win32 {
     [DllImport(Dll)]
     internal static extern bool SetConsoleCP(uint wCodePageID);
 
-    // Input record structures
+    // Corrected INPUT_RECORD definition
     [StructLayout(LayoutKind.Explicit)]
-    internal struct INPUT_RECORD {
+    internal struct INPUT_RECORD
+    {
         [FieldOffset(0)]
-        public uint EventType;
-        [FieldOffset(4)]
-        public KEY_EVENT_RECORD KeyEvent;
-        [FieldOffset(4)]
-        public MOUSE_EVENT_RECORD MouseEvent;
-        [FieldOffset(4)]
-        public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-        [FieldOffset(4)]
-        public FOCUS_EVENT_RECORD FocusEvent;
+        public ushort EventType; // WORD (2 bytes)
+
+        [FieldOffset(4)] // Union starts at offset 4 due to padding for 4-byte alignment
+        public EventUnion Event;
+
+        [StructLayout(LayoutKind.Explicit)]
+        internal struct EventUnion
+        {
+            [FieldOffset(0)]
+            public KEY_EVENT_RECORD KeyEvent;
+            [FieldOffset(0)]
+            public MOUSE_EVENT_RECORD MouseEvent;
+            [FieldOffset(0)]
+            public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+            // MENU_EVENT_RECORD is not present in the original code, so I won't add it.
+            [FieldOffset(0)]
+            public FOCUS_EVENT_RECORD FocusEvent;
+        }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct KEY_EVENT_RECORD {
-        [MarshalAs(UnmanagedType.I4)]
-        public int bKeyDown;
-        public ushort wRepeatCount;
-        public ushort wVirtualKeyCode;
-        public ushort wVirtualScanCode;
-        public KEY_EVENT_CHAR_UNION uChar;
-        public uint dwControlKeyState;
+        internal struct KEY_EVENT_RECORD {
+        public int bKeyDown; // BOOL (4 bytes)
+        public ushort wRepeatCount; // WORD (2 bytes)
+        public ushort wVirtualKeyCode; // WORD (2 bytes)
+        public ushort wVirtualScanCode; // WORD (2 bytes)
+        public char UnicodeChar; // Direct UnicodeChar
+        public uint dwControlKeyState; // DWORD (4 bytes)
     }
 
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct KEY_EVENT_CHAR_UNION {
-        [FieldOffset(0)]
-        public char UnicodeChar;
-        [FieldOffset(0)]
-        public byte AsciiChar;
-    }
+    
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct MOUSE_EVENT_RECORD {
@@ -335,15 +344,13 @@ namespace Win32 {
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct FOCUS_EVENT_RECORD {
-        public bool bSetFocus;
+        public int bSetFocus; // BOOL (4 bytes)
     }
 
-    // Helper function for extracting high word from DWORD
     internal static ushort HiWord(int dword) {
         return (ushort)((dword >> 16) & 0xFFFF);
     }
 
-    // Cursor-related structures and functions
     [StructLayout(LayoutKind.Sequential)]
     internal struct CONSOLE_CURSOR_INFO {
         public uint dwSize;

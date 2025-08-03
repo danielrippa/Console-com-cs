@@ -33,18 +33,18 @@ namespace Console {
             }
 
             object eventDetails;
-            switch (inputRecord.EventType) {
-                case KEY_EVENT:
-                    eventDetails = GetKeyEventDetails(inputRecord.KeyEvent);
+            switch ((ushort)inputRecord.EventType) {
+                case (ushort)KEY_EVENT:
+                    eventDetails = GetKeyEventDetails(inputRecord.Event.KeyEvent);
                     break;
-                case MOUSE_EVENT:
-                    eventDetails = GetMouseEventDetails(inputRecord.MouseEvent);
+                case (ushort)MOUSE_EVENT:
+                    eventDetails = GetMouseEventDetails(inputRecord.Event.MouseEvent);
                     break;
-                case WINDOW_BUFFER_SIZE_EVENT:
-                    eventDetails = GetWindowResizedEventDetails(inputRecord.WindowBufferSizeEvent);
+                case (ushort)WINDOW_BUFFER_SIZE_EVENT:
+                    eventDetails = GetWindowResizedEventDetails(inputRecord.Event.WindowBufferSizeEvent);
                     break;
-                case FOCUS_EVENT:
-                    eventDetails = GetWindowFocusEventDetails(inputRecord.FocusEvent);
+                case (ushort)FOCUS_EVENT:
+                    eventDetails = GetWindowFocusEventDetails(inputRecord.Event.FocusEvent);
                     break;
                 default:
                     eventDetails = new { type = "None" };
@@ -102,20 +102,19 @@ namespace Console {
         }
 
         private object GetKeyEventDetails(KEY_EVENT_RECORD keyEventRecord) {
+            var controlKeyState = keyEventRecord.dwControlKeyState;
             return new {
                 type = keyEventRecord.bKeyDown != 0 ? "KeyPressed" : "KeyReleased",
                 scanCode = keyEventRecord.wVirtualScanCode,
                 keyCode = keyEventRecord.wVirtualKeyCode,
-                unicodeChar = keyEventRecord.uChar.UnicodeChar,
-                unicodeCharCode = (int)keyEventRecord.uChar.UnicodeChar,
-                asciiCharCode = (int)keyEventRecord.uChar.AsciiChar,
-                asciiChar = keyEventRecord.uChar.AsciiChar > 0 && keyEventRecord.uChar.AsciiChar < 127 ? ((char)keyEventRecord.uChar.AsciiChar).ToString() : "",
-                repetitions = keyEventRecord.bKeyDown != 0 ? (int?)keyEventRecord.wRepeatCount : null,
+                unicodeChar = keyEventRecord.UnicodeChar == '\0' ? "" : keyEventRecord.UnicodeChar.ToString(),
+                unicodeCharCode = (int)keyEventRecord.UnicodeChar,
+                repetitions = (int)keyEventRecord.wRepeatCount,
                 keyType = GetKeyType(keyEventRecord.wVirtualKeyCode),
-                shiftPressed = IsModifierKeyPressed(0x10, keyEventRecord.dwControlKeyState),
-                ctrlPressed = IsModifierKeyPressed(0x11, keyEventRecord.dwControlKeyState),
-                altPressed = IsModifierKeyPressed(0x12, keyEventRecord.dwControlKeyState),
-                controlKeys = GetControlKeysDetails(keyEventRecord.dwControlKeyState)
+                shiftPressed = (controlKeyState & (uint)ControlKeyState.SHIFT_PRESSED) != 0,
+                ctrlPressed = ((controlKeyState & (uint)ControlKeyState.LEFT_CTRL_PRESSED) != 0 || (controlKeyState & (uint)ControlKeyState.RIGHT_CTRL_PRESSED) != 0),
+                altPressed = ((controlKeyState & (uint)ControlKeyState.LEFT_ALT_PRESSED) != 0 || (controlKeyState & (uint)ControlKeyState.RIGHT_ALT_PRESSED) != 0),
+                controlKeys = GetControlKeysDetails(controlKeyState)
             };
         }
 
@@ -127,14 +126,14 @@ namespace Console {
             var controlKeys = GetControlKeysDetails(mouseEventRecord.dwControlKeyState);
 
             switch (mouseEventRecord.dwEventFlags) {
-                case DOUBLE_CLICK:
+                case Kernel32.DOUBLE_CLICK:
                     return new {
                         type = "MouseDoubleClick",
                         cursorLocation,
                         buttons = GetMouseButtonsDetails(mouseEventRecord.dwButtonState),
                         controlKeys
                     };
-                case 0: // button press or release
+                case 0:
                     if (mouseEventRecord.dwButtonState != 0) {
                         return new {
                             type = "MouseClick",
@@ -149,20 +148,20 @@ namespace Console {
                             controlKeys
                         };
                     }
-                case MOUSE_HWHEELED:
+                case Kernel32.MOUSE_HWHEELED:
                     return new {
                         type = "HorizontalWheel",
                         cursorLocation,
                         direction = (short)HiWord((int)mouseEventRecord.dwButtonState) > 0 ? "right" : "left",
                         controlKeys
                     };
-                case MOUSE_MOVED:
+                case Kernel32.MOUSE_MOVED:
                     return new {
                         type = "MouseMoved",
                         cursorLocation,
                         controlKeys
                     };
-                case MOUSE_WHEELED:
+                case Kernel32.MOUSE_WHEELED:
                     return new {
                         type = "VerticalWheel",
                         cursorLocation,
@@ -185,21 +184,8 @@ namespace Console {
         private object GetWindowFocusEventDetails(FOCUS_EVENT_RECORD focusEvent) {
             return new {
                 type = "WindowFocus",
-                focused = focusEvent.bSetFocus
+                focused = focusEvent.bSetFocus != 0
             };
-        }
-
-        private bool IsModifierKeyPressed(int keyCode, uint controlKeyState) {
-            switch (keyCode) {
-                case 0x10: // Shift
-                    return (controlKeyState & SHIFT_PRESSED) != 0;
-                case 0x11: // Ctrl
-                    return (controlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
-                case 0x12: // Alt
-                    return (controlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
-                default:
-                    return false;
-            }
         }
 
         private string GetKeyType(int keyCode) {
@@ -223,15 +209,15 @@ namespace Console {
 
         private object GetControlKeysDetails(uint controlKeyState) {
             return new {
-                capsLockOn = (controlKeyState & CAPSLOCK_ON) != 0,
-                enhancedKey = (controlKeyState & ENHANCED_KEY) != 0,
-                leftAltPressed = (controlKeyState & LEFT_ALT_PRESSED) != 0,
-                leftCtrlPressed = (controlKeyState & LEFT_CTRL_PRESSED) != 0,
-                numLockOn = (controlKeyState & NUMLOCK_ON) != 0,
-                rightAltPressed = (controlKeyState & RIGHT_ALT_PRESSED) != 0,
-                rightCtrlPressed = (controlKeyState & RIGHT_CTRL_PRESSED) != 0,
-                scrollLockOn = (controlKeyState & SCROLLLOCK_ON) != 0,
-                shiftPressed = (controlKeyState & SHIFT_PRESSED) != 0
+                capsLockOn = (controlKeyState & (uint)ControlKeyState.CAPSLOCK_ON) != 0,
+                enhancedKey = (controlKeyState & (uint)ControlKeyState.ENHANCED_KEY) != 0,
+                leftAltPressed = (controlKeyState & (uint)ControlKeyState.LEFT_ALT_PRESSED) != 0,
+                leftCtrlPressed = (controlKeyState & (uint)ControlKeyState.LEFT_CTRL_PRESSED) != 0,
+                numLockOn = (controlKeyState & (uint)ControlKeyState.NUMLOCK_ON) != 0,
+                rightAltPressed = (controlKeyState & (uint)ControlKeyState.RIGHT_ALT_PRESSED) != 0,
+                rightCtrlPressed = (controlKeyState & (uint)ControlKeyState.RIGHT_CTRL_PRESSED) != 0,
+                scrollLockOn = (controlKeyState & (uint)ControlKeyState.SCROLLLOCK_ON) != 0,
+                shiftPressed = (controlKeyState & (uint)ControlKeyState.SHIFT_PRESSED) != 0
             };
         }
 
