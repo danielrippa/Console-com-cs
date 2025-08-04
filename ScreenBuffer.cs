@@ -106,7 +106,7 @@ namespace Console {
 
     }
 
-    public bool SetAttrsAt(short row, short column, short attrValue, int length) {
+    public bool SetAttrAt(short row, short column, short attrValue, int length) {
       if (column < 0 || row < 0 || column >= Width || row >= Height) {
         return false;
       }
@@ -139,7 +139,7 @@ namespace Console {
       if (text == null) return false;
       
       bool charsResult = SetCharsAt(row, column, text);
-      bool attrsResult = SetAttrsAt(row, column, attrValue, text.Length);
+      bool attrsResult = SetAttrAt(row, column, attrValue, text.Length);
       
       return charsResult && attrsResult;
     }
