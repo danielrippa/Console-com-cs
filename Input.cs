@@ -14,11 +14,7 @@ namespace Console {
 
     public class Input {
 
-        private IntPtr inputHandle;
-
-        public Input() {
-            inputHandle = GetStdHandle(STD_INPUT_HANDLE);
-        }
+        private IntPtr inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
         public string GetInputEvent() {
             uint numberOfEvents = 0;
@@ -64,6 +60,22 @@ namespace Console {
             Kernel32.GetConsoleMode(inputHandle, out mode);
             mode = value ? (mode | bit) : (mode & ~bit);
             Kernel32.SetConsoleMode(inputHandle, mode);
+        }
+
+        public int ModeState {
+          get {
+            uint currentState;
+            Kernel32.GetConsoleMode(inputHandle, out currentState);
+            return (int)currentState;
+          }
+          set {
+            Kernel32.SetConsoleMode(inputHandle, (uint)value);
+          }
+        }
+
+        public bool ExtendedFlagsEnabled {
+          get { return GetConsoleMode(ENABLE_EXTENDED_FLAGS); }
+          set { SetConsoleMode(ENABLE_EXTENDED_FLAGS, value); }
         }
 
         public bool EchoInputEnabled {
