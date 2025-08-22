@@ -101,4 +101,6 @@ namespace Console {
       set => SetConsoleOutputCP((uint)value);
     }
 
+  }
+
 }

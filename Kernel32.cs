@@ -92,7 +92,7 @@ namespace Win32 {
         public SMALL_RECT srWindow;
         public COORD dwMaximumWindowSize;
         public short wPopupAttributes;
-        public int bFullscreenSupported; // BOOL is 4 bytes
+        public int bFullscreenSupported; 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
         public uint[] ColorTable;
     }
@@ -233,7 +233,6 @@ namespace Win32 {
     internal const uint ENABLE_QUICK_EDIT_MODE = 0x0040;
     internal const uint ENABLE_EXTENDED_FLAGS = 0x0080;
 
-    // Output Mode Flags
     internal const uint ENABLE_PROCESSED_OUTPUT = 0x0001;
     internal const uint ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002;
     internal const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
@@ -279,10 +278,10 @@ namespace Win32 {
     internal const uint RIGHTMOST_BUTTON_PRESSED = 0x0002;
 
     [DllImport(Dll)]
-    internal static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
 
     [DllImport(Dll)]
-    internal static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
 
     [DllImport(Dll)]
     internal static extern bool GetNumberOfConsoleInputEvents(IntPtr hConsoleInput, ref uint lpcNumberOfEvents);
@@ -305,14 +304,13 @@ namespace Win32 {
     [DllImport(Dll)]
     internal static extern bool SetConsoleOutputCP(uint wCodePageID);
 
-    // Corrected INPUT_RECORD definition
     [StructLayout(LayoutKind.Explicit)]
     internal struct INPUT_RECORD
     {
         [FieldOffset(0)]
-        public ushort EventType; // WORD (2 bytes)
+        public ushort EventType; 
 
-        [FieldOffset(4)] // Union starts at offset 4 due to padding for 4-byte alignment
+        [FieldOffset(4)] 
         public EventUnion Event;
 
         [StructLayout(LayoutKind.Explicit)]
@@ -324,19 +322,18 @@ namespace Win32 {
             public MOUSE_EVENT_RECORD MouseEvent;
             [FieldOffset(0)]
             public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-            // MENU_EVENT_RECORD is not present in the original code, so I won't add it.
             [FieldOffset(0)]
             public FOCUS_EVENT_RECORD FocusEvent;
         }
     }
 
         internal struct KEY_EVENT_RECORD {
-        public int bKeyDown; // BOOL (4 bytes)
-        public ushort wRepeatCount; // WORD (2 bytes)
-        public ushort wVirtualKeyCode; // WORD (2 bytes)
-        public ushort wVirtualScanCode; // WORD (2 bytes)
-        public char UnicodeChar; // Direct UnicodeChar
-        public uint dwControlKeyState; // DWORD (4 bytes)
+        public int bKeyDown; 
+        public ushort wRepeatCount; 
+        public ushort wVirtualKeyCode; 
+        public ushort wVirtualScanCode; 
+        public char UnicodeChar; 
+        public uint dwControlKeyState; 
     }
 
     
@@ -356,7 +353,7 @@ namespace Win32 {
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct FOCUS_EVENT_RECORD {
-        public int bSetFocus; // BOOL (4 bytes)
+        public int bSetFocus; 
     }
 
     internal static ushort HiWord(int dword) {
