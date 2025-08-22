@@ -233,6 +233,11 @@ namespace Win32 {
     internal const uint ENABLE_QUICK_EDIT_MODE = 0x0040;
     internal const uint ENABLE_EXTENDED_FLAGS = 0x0080;
 
+    // Output Mode Flags
+    internal const uint ENABLE_PROCESSED_OUTPUT = 0x0001;
+    internal const uint ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002;
+    internal const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+
     internal const uint KEY_EVENT = 0x0001;
     internal const uint MOUSE_EVENT = 0x0002;
     internal const uint WINDOW_BUFFER_SIZE_EVENT = 0x0004;
@@ -293,6 +298,12 @@ namespace Win32 {
 
     [DllImport(Dll)]
     internal static extern bool SetConsoleCP(uint wCodePageID);
+
+    [DllImport(Dll)]
+    internal static extern uint GetConsoleOutputCP();
+
+    [DllImport(Dll)]
+    internal static extern bool SetConsoleOutputCP(uint wCodePageID);
 
     // Corrected INPUT_RECORD definition
     [StructLayout(LayoutKind.Explicit)]

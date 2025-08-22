@@ -161,6 +161,42 @@ namespace Console {
       get => handle;
     }
 
+    private bool GetConsoleMode(uint bit) {
+      return ((uint)ModeState & bit) != 0;
+    }
+
+    private void SetConsoleMode(uint bit, bool value) {
+      uint currentMode = (uint)ModeState;
+      uint newMode = value ? (currentMode | bit) : (currentMode & ~bit);
+      ModeState = (int)newMode;
+    }
+
+    public int ModeState {
+      get {
+        uint currentState;
+        Kernel32.GetConsoleMode(handle, out currentState);
+        return (int)currentState;
+      }
+      set {
+        Kernel32.SetConsoleMode(handle, (uint)value);
+      }
+    }
+
+    public bool ProcessedOutputEnabled {
+      get { return GetConsoleMode(ENABLE_PROCESSED_OUTPUT); }
+      set { SetConsoleMode(ENABLE_PROCESSED_OUTPUT, value); }
+    }
+
+    public bool WrapAtEOLOutputEnabled {
+      get { return GetConsoleMode(ENABLE_WRAP_AT_EOL_OUTPUT); }
+      set { SetConsoleMode(ENABLE_WRAP_AT_EOL_OUTPUT, value); }
+    }
+
+    public bool VirtualTerminalProcessingEnabled {
+      get { return GetConsoleMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING); }
+      set { SetConsoleMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING, value); }
+    }
+
     private CHAR_INFO[] pasteAreaBuffer;
     private short pasteAreaWidth;
     private short pasteAreaHeight;

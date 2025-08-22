@@ -67,7 +67,7 @@ namespace Console {
     [ComVisible(true)]
     [ClassInterface(ClassInterfaceType.AutoDispatch)]
     [Guid("A1928701-43A6-4C67-8286-1E8A3023A8EB")]
-    [ProgId("WinCon.TextBorders")]
+    [ProgId("Console.TextBorders")]
     public class TextBorders {
 
       public bool? Top { get; set; }
@@ -99,7 +99,7 @@ namespace Console {
     [ComVisible(true)]
     [ClassInterface(ClassInterfaceType.AutoDispatch)]
     [Guid("65F7D943-FBB2-4942-B4E8-BD355CEDE334")]
-    [ProgId("WinCon.TextColor")]
+    [ProgId("Console.TextColor")]
     public class TextColor {
 
       public bool? Red { get; set; }
@@ -119,7 +119,7 @@ namespace Console {
     [ComVisible(true)]
     [ClassInterface(ClassInterfaceType.AutoDispatch)]
     [Guid("D4E1F3A2-5B8B-4F8A-9B6E-8C6B3A8D4F3A")]
-    [ProgId("WinCon.TextColors")]
+    [ProgId("Console.TextColors")]
     public class TextColors {
 
       public TextColor Black { get; } = new TextColor();

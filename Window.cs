@@ -96,6 +96,9 @@ namespace Console {
 
     }
 
-  }
+    public int OutputCodePage {
+      get => (int)GetConsoleOutputCP();
+      set => SetConsoleOutputCP((uint)value);
+    }
 
 }
