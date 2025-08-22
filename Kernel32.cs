@@ -231,6 +231,7 @@ namespace Win32 {
     internal const uint ENABLE_MOUSE_INPUT = 0x0010;
     internal const uint ENABLE_INSERT_MODE = 0x0020;
     internal const uint ENABLE_QUICK_EDIT_MODE = 0x0040;
+    internal const uint ENABLE_EXTENDED_FLAGS = 0x0080;
 
     internal const uint KEY_EVENT = 0x0001;
     internal const uint MOUSE_EVENT = 0x0002;
