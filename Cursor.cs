@@ -50,7 +50,7 @@ namespace Console {
       return info;
     }
 
-    private void SetCursorInfo(CONSOLE_CURSOR_INFO info) {
+    private void SetCursorInfo(ref CONSOLE_CURSOR_INFO info) {
       SetConsoleCursorInfo(Handle, ref info);
     }
 
@@ -59,7 +59,7 @@ namespace Console {
       set {
         var info = GetCursorInfo();
         info.dwSize = (uint)value;
-        SetCursorInfo(info);
+        SetCursorInfo(ref info);
       }
 
     }
@@ -69,7 +69,7 @@ namespace Console {
       set {
         var info = GetCursorInfo();
         info.bVisible = value;
-        SetCursorInfo(info);
+        SetCursorInfo(ref info);
       }
     }
 

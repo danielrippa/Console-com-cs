@@ -10,7 +10,11 @@ namespace Console {
     [ProgId("Console.Palette")]
     public class Palette {
 
-      public IntPtr Handle = GetStdOutHandle();
+      public IntPtr Handle { get; set; }
+
+      public Palette() {
+        Handle = GetStdOutHandle();
+      }
 
       private bool IsValidColorIndex(int index) {
         return index >= 0 && index <= 15;

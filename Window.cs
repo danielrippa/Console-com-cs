@@ -14,7 +14,11 @@ namespace Console {
   public class Window {
 
     private const int MAX_TITLE_LENGTH = 255;
-    private IntPtr handle = GetStdOutHandle();
+    public IntPtr Handle { get; set; }
+
+    public Window() {
+      Handle = GetStdOutHandle();
+    }
 
     public string Title {
       get => GetTitle();
@@ -36,22 +40,22 @@ namespace Console {
 
     public int Width {
       get {
-        var info = GetBufferInfo(handle);
+        var info = GetBufferInfo(Handle);
         return info.srWindow.Right - info.srWindow.Left + 1;
       }
       set {
-        var info = GetBufferInfo(handle);
+        var info = GetBufferInfo(Handle);
         Resize(value, info.srWindow.Bottom - info.srWindow.Top + 1);
       }
     }
 
     public int Height {
       get {
-        var info = GetBufferInfo(handle);
+        var info = GetBufferInfo(Handle);
         return info.srWindow.Bottom - info.srWindow.Top + 1;
       }
       set {
-        var info = GetBufferInfo(handle);
+        var info = GetBufferInfo(Handle);
         Resize(info.srWindow.Right - info.srWindow.Left + 1, value);
       }
     }
@@ -63,8 +67,7 @@ namespace Console {
       }
 
       try {
-        IntPtr handle = GetStdOutHandle();
-        var info = GetBufferInfo(handle);
+        var info = GetBufferInfo(Handle);
 
         width = Math.Min(width, info.dwMaximumWindowSize.X);
         height = Math.Min(height, info.dwMaximumWindowSize.Y);
@@ -74,7 +77,7 @@ namespace Console {
           Y = (short)Math.Max(height, info.dwSize.Y)
         };
 
-        if (!SetConsoleScreenBufferSize(handle, bufferSize)) {
+        if (!SetConsoleScreenBufferSize(Handle, bufferSize)) {
           return false;
         }
 
@@ -85,7 +88,7 @@ namespace Console {
           Bottom = (short)(height - 1)
         };
 
-        if (!SetConsoleWindowInfo(handle, true, ref rect)) {
+        if (!SetConsoleWindowInfo(Handle, true, ref rect)) {
           return false;
         }
 
