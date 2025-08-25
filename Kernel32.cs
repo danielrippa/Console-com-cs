@@ -238,6 +238,7 @@ namespace Win32 {
     internal const uint ENABLE_PROCESSED_OUTPUT = 0x0001;
     internal const uint ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002;
     internal const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+    internal const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
 
     internal const uint KEY_EVENT = 0x0001;
     internal const uint MOUSE_EVENT = 0x0002;

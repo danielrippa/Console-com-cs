@@ -29,8 +29,6 @@ namespace Console {
       );
     }
 
-    
-
     public bool Activate() {
       return SetConsoleActiveScreenBuffer(handle);
     }
@@ -155,8 +153,9 @@ namespace Console {
       set => SetConsoleTextAttribute(handle, (ushort)value);
     }
 
-    public long Handle { 
+    public long Handle {
       get => handle.ToInt64();
+      set => handle = new IntPtr(value);
     }
 
     private bool GetMode(uint bit) {
@@ -193,6 +192,11 @@ namespace Console {
     public bool VirtualTerminalProcessingEnabled {
       get { return GetMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING); }
       set { SetMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING, value); }
+    }
+
+    public bool NewlineAutoReturnEnabled {
+      get { return !GetMode(DISABLE_NEWLINE_AUTO_RETURN); }
+      set { SetMode(DISABLE_NEWLINE_AUTO_RETURN, !value); }
     }
 
     private CHAR_INFO[] pasteAreaBuffer;

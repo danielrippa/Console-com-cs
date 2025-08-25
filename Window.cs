@@ -14,10 +14,15 @@ namespace Console {
   public class Window {
 
     private const int MAX_TITLE_LENGTH = 255;
-    public IntPtr Handle { get; set; }
+    private IntPtr handle;
+
+    public long Handle {
+        get => handle.ToInt64();
+        set => handle = new IntPtr(value);
+    }
 
     public Window() {
-      Handle = GetStdOutHandle();
+      handle = GetStdOutHandle();
     }
 
     public string Title {
@@ -40,34 +45,34 @@ namespace Console {
 
     public int Width {
       get {
-        var info = GetBufferInfo(Handle);
+        var info = GetBufferInfo(handle);
         return info.srWindow.Right - info.srWindow.Left + 1;
       }
       set {
-        var info = GetBufferInfo(Handle);
+        var info = GetBufferInfo(handle);
         Resize(value, info.srWindow.Bottom - info.srWindow.Top + 1);
       }
     }
 
     public int Height {
       get {
-        var info = GetBufferInfo(Handle);
+        var info = GetBufferInfo(handle);
         return info.srWindow.Bottom - info.srWindow.Top + 1;
       }
       set {
-        var info = GetBufferInfo(Handle);
+        var info = GetBufferInfo(handle);
         Resize(info.srWindow.Right - info.srWindow.Left + 1, value);
       }
     }
 
-    public bool Resize(int width, int height) {
+    public bool Resize(int height, int width) {
 
       if (width <= 0 || height <= 0) {
         return false;
       }
 
       try {
-        var info = GetBufferInfo(Handle);
+        var info = GetBufferInfo(handle);
 
         width = Math.Min(width, info.dwMaximumWindowSize.X);
         height = Math.Min(height, info.dwMaximumWindowSize.Y);
@@ -77,7 +82,7 @@ namespace Console {
           Y = (short)Math.Max(height, info.dwSize.Y)
         };
 
-        if (!SetConsoleScreenBufferSize(Handle, bufferSize)) {
+        if (!SetConsoleScreenBufferSize(handle, bufferSize)) {
           return false;
         }
 
@@ -88,7 +93,7 @@ namespace Console {
           Bottom = (short)(height - 1)
         };
 
-        if (!SetConsoleWindowInfo(Handle, true, ref rect)) {
+        if (!SetConsoleWindowInfo(handle, true, ref rect)) {
           return false;
         }
 

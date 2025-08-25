@@ -11,27 +11,24 @@ namespace Console {
 
   public class Cursor {
 
-    private IntPtr Handle;
+    private IntPtr handle;
+
+    public long Handle {
+      get => handle.ToInt64();
+      set => handle = new IntPtr(value);
+    }
 
     public Cursor() {
-      Handle = GetStdOutHandle();
-    }
-
-    public void SetHandle(long handleValue) {
-      Handle = new IntPtr(handleValue);
-    }
-
-    public long GetHandle() {
-      return Handle.ToInt64();
+      handle = GetStdOutHandle();
     }
 
     public void Goto(int row, int column) {
       var position = new COORD { X = (short)column, Y = (short)row };
-      SetConsoleCursorPosition(Handle, position);
+      SetConsoleCursorPosition(handle, position);
     }
 
     private COORD GetPosition() {
-      var info = GetBufferInfo(Handle);
+      var info = GetBufferInfo(handle);
       return info.dwCursorPosition;
     }
 
@@ -46,12 +43,12 @@ namespace Console {
     }
 
     private CONSOLE_CURSOR_INFO GetCursorInfo() {
-      GetConsoleCursorInfo(Handle, out var info);
+      GetConsoleCursorInfo(handle, out var info);
       return info;
     }
 
     private void SetCursorInfo(ref CONSOLE_CURSOR_INFO info) {
-      SetConsoleCursorInfo(Handle, ref info);
+      SetConsoleCursorInfo(handle, ref info);
     }
 
     public int Size {

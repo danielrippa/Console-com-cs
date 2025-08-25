@@ -11,19 +11,19 @@ namespace Console {
 
   public class Viewport {
 
-    private IntPtr _handle;
+    private IntPtr handle;
 
-    public Viewport() {
-      _handle = GetStdOutHandle();
+    public long Handle {
+      get => handle.ToInt64();
+      set => handle = new IntPtr(value);
     }
 
-    public IntPtr Handle {
-      get => _handle;
-      set => _handle = value;
+    public Viewport() {
+      handle = GetStdOutHandle();
     }
 
     private SMALL_RECT Window {
-      get => GetBufferInfo(_handle).srWindow;
+      get => GetBufferInfo(handle).srWindow;
     }
 
     public int Left {
@@ -53,16 +53,16 @@ namespace Console {
     }
 
     public int MaxWidth {
-      get => GetBufferInfo(_handle).dwMaximumWindowSize.X;
+      get => GetBufferInfo(handle).dwMaximumWindowSize.X;
     }
     
     public int MaxHeight {
-      get => GetBufferInfo(_handle).dwMaximumWindowSize.Y;
+      get => GetBufferInfo(handle).dwMaximumWindowSize.Y;
     }
 
     public bool MoveTo(int row, int column) {
       try {
-        var info = GetBufferInfo(_handle);
+        var info = GetBufferInfo(handle);
         
         column = Math.Max(0, column);
         row = Math.Max(0, row);
@@ -80,21 +80,21 @@ namespace Console {
           Bottom = (short)(row + Height - 1)
         };
 
-        return SetConsoleWindowInfo(_handle, true, ref rect);
+        return SetConsoleWindowInfo(handle, true, ref rect);
       } catch (Exception) {
         return false;
       }
     }
 
     public bool ResizeToBuffer() {
-      var info = GetBufferInfo(_handle);
+      var info = GetBufferInfo(handle);
       SMALL_RECT rect = new SMALL_RECT {
         Left = 0,
         Top = 0,
         Right = (short)(info.dwSize.X - 1),
         Bottom = (short)(info.dwSize.Y - 1)
       };
-      return SetConsoleWindowInfo(_handle, true, ref rect);
+      return SetConsoleWindowInfo(handle, true, ref rect);
     }
     
   }

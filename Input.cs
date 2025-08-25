@@ -14,21 +14,26 @@ namespace Console {
 
     public class Input {
 
-        public IntPtr InputHandle { get; set; }
+        private IntPtr inputHandle;
+
+        public long InputHandle {
+            get => inputHandle.ToInt64();
+            set => inputHandle = new IntPtr(value);
+        }
 
         public Input() {
-            InputHandle = GetStdHandle(STD_INPUT_HANDLE);
+            inputHandle = GetStdHandle(STD_INPUT_HANDLE);
         }
 
         public string GetInputEvent() {
             uint numberOfEvents = 0;
-            if (!GetNumberOfConsoleInputEvents(InputHandle, ref numberOfEvents) || numberOfEvents == 0) {
+            if (!GetNumberOfConsoleInputEvents(inputHandle, ref numberOfEvents) || numberOfEvents == 0) {
                 return Serialize(new { type = "None" });
             }
 
             INPUT_RECORD inputRecord = new INPUT_RECORD();
             uint eventsRead = 0;
-            if (!ReadConsoleInput(InputHandle, ref inputRecord, 1, ref eventsRead) || eventsRead == 0) {
+            if (!ReadConsoleInput(inputHandle, ref inputRecord, 1, ref eventsRead) || eventsRead == 0) {
                 return Serialize(new { type = "None" });
             }
 
@@ -55,25 +60,25 @@ namespace Console {
 
         private bool GetConsoleMode(uint bit) {
             uint mode;
-            Kernel32.GetConsoleMode(InputHandle, out mode);
+            Kernel32.GetConsoleMode(inputHandle, out mode);
             return (mode & bit) != 0;
         }
 
         private void SetConsoleMode(uint bit, bool value) {
             uint mode;
-            Kernel32.GetConsoleMode(InputHandle, out mode);
+            Kernel32.GetConsoleMode(inputHandle, out mode);
             mode = value ? (mode | bit) : (mode & ~bit);
-            Kernel32.SetConsoleMode(InputHandle, mode);
+            Kernel32.SetConsoleMode(inputHandle, mode);
         }
 
         public int ModeState {
           get {
             uint currentState;
-            Kernel32.GetConsoleMode(InputHandle, out currentState);
+            Kernel32.GetConsoleMode(inputHandle, out currentState);
             return (int)currentState;
           }
           set {
-            Kernel32.SetConsoleMode(InputHandle, (uint)value);
+            Kernel32.SetConsoleMode(inputHandle, (uint)value);
           }
         }
 

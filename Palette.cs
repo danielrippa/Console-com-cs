@@ -10,10 +10,15 @@ namespace Console {
     [ProgId("Console.Palette")]
     public class Palette {
 
-      public IntPtr Handle { get; set; }
+      private IntPtr handle;
+
+      public long Handle {
+        get => handle.ToInt64();
+        set => handle = new IntPtr(value);
+      }
 
       public Palette() {
-        Handle = GetStdOutHandle();
+        handle = GetStdOutHandle();
       }
 
       private bool IsValidColorIndex(int index) {
@@ -21,16 +26,16 @@ namespace Console {
       }
 
       private uint GetColorValue(int index) {
-        return GetBufferInfoEx(Handle).ColorTable[index];
+        return GetBufferInfoEx(handle).ColorTable[index];
       }
 
       public bool SetColorRGB(int index, short r, short g, short b) {
         if (!IsValidColorIndex(index)) {
           return false;
         } else {
-          var info = GetBufferInfoEx(Handle);
+          var info = GetBufferInfoEx(handle);
           info.ColorTable[index] = (uint)(((byte)r << 16) | ((byte)g << 8) | (byte)b);
-          return SetBufferInfoEx(Handle, info);
+          return SetBufferInfoEx(handle, info);
         }
       }
 
@@ -38,7 +43,7 @@ namespace Console {
         if (!IsValidColorIndex(index)) {
           return "";
         } else {
-          uint color = GetBufferInfoEx(Handle).ColorTable[index];
+          uint color = GetBufferInfoEx(handle).ColorTable[index];
 
           short r = (short)((color >> 16) & 0xFF);
           short g = (short)((color >> 8) & 0xFF);
@@ -49,7 +54,7 @@ namespace Console {
       }
 
       public string GetPaletteAsString() {
-        var info = GetBufferInfoEx(Handle);
+        var info = GetBufferInfoEx(handle);
         var colors = new string[16];
         for (int i = 0; i < 16; i++) {
           uint color = info.ColorTable[i];
@@ -66,7 +71,7 @@ namespace Console {
         var parts = paletteString.Split(';');
         if (parts.Length != 16) return false;
 
-        var info = GetBufferInfoEx(Handle);
+        var info = GetBufferInfoEx(handle);
         for (int i = 0; i < 16; i++) {
           var rgb = parts[i].Split(',');
           if (rgb.Length != 3) return false;
@@ -76,7 +81,7 @@ namespace Console {
           info.ColorTable[i] = (uint)(((byte)r << 16) | ((byte)g << 8) | (byte)b);
         }
 
-        return SetBufferInfoEx(Handle, info);
+        return SetBufferInfoEx(handle, info);
       }
 
     }
