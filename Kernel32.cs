@@ -19,6 +19,8 @@ namespace Win32 {
 
     internal const uint GENERIC_READ = 0x80000000;
     internal const uint GENERIC_WRITE = 0x40000000;
+    internal const uint FILE_SHARE_READ = 0x00000001;
+    internal const uint FILE_SHARE_WRITE = 0x00000002;
     internal const uint CONSOLE_TEXTMODE_BUFFER = 1;
 
     [DllImport(Dll, SetLastError = true)]

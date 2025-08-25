@@ -13,25 +13,23 @@ namespace Console {
 
   public class ScreenBuffer {
 
-    private IntPtr handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    private IntPtr handle;
 
-    public bool AssignHandle() {
-
-      IntPtr newHandle = CreateConsoleScreenBuffer(
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        IntPtr.Zero,
-        CONSOLE_TEXTMODE_BUFFER,
-        IntPtr.Zero
-      );
-
-      if (newHandle == INVALID_HANDLE_VALUE) {
-        return false;
-      }
-
-      handle = newHandle;
-      return true;
+    public ScreenBuffer() {
+      handle = GetStdHandle(STD_OUTPUT_HANDLE);
     }
+
+    public static IntPtr CreateScreenBufferHandle() {
+      return CreateConsoleScreenBuffer(
+          GENERIC_READ | GENERIC_WRITE,
+          FILE_SHARE_READ | FILE_SHARE_WRITE,
+          IntPtr.Zero,
+          CONSOLE_TEXTMODE_BUFFER,
+          IntPtr.Zero
+      );
+    }
+
+    
 
     public bool Activate() {
       return SetConsoleActiveScreenBuffer(handle);
@@ -57,13 +55,13 @@ namespace Console {
       return WriteConsole(handle, text, (uint)text.Length, out charsWritten, IntPtr.Zero);
     }
 
-    public bool SetCharsAt(short row, short column, string text) {
+    public bool SetCharsAt(int row, int column, string text) {
       uint charsWritten;
-      COORD writeCoord = new COORD(column, row);
+      COORD writeCoord = new COORD((short)column, (short)row);
       return WriteConsoleOutputCharacter(handle, text, (uint)text.Length, writeCoord, out charsWritten);
     }
 
-    public bool SetAttrsAt(short row, short column, string attrsCsv) {
+    public bool SetAttrsAt(int row, int column, string attrsCsv) {
 
       if (column < 0 || row < 0|| column >= Width || row >= Height) {
         return false;
@@ -92,7 +90,7 @@ namespace Console {
         return true;
       }
 
-      COORD dwWriteCoord = new COORD(column, row);
+      COORD dwWriteCoord = new COORD((short)column, (short)row);
 
       uint lpNumberOfAttrsWritten;
 
@@ -106,7 +104,7 @@ namespace Console {
 
     }
 
-    public bool SetAttrAt(short row, short column, short attrValue, int length) {
+    public bool SetAttrAt(int row, int column, int attrValue, int length) {
       if (column < 0 || row < 0 || column >= Width || row >= Height) {
         return false;
       }
@@ -123,7 +121,7 @@ namespace Console {
         attrs[i] = (ushort)attrValue;
       }
 
-      COORD dwWriteCoord = new COORD(column, row);
+      COORD dwWriteCoord = new COORD((short)column, (short)row);
       uint lpNumberOfAttrsWritten;
 
       return WriteConsoleOutputAttribute(
@@ -135,37 +133,37 @@ namespace Console {
       );
     }
 
-    public bool WriteTextWithAttrs(short row, short column, string text, short attrValue) {
+    public bool WriteTextWithAttrs(int row, int column, string text, int attrValue) {
       if (text == null) return false;
-      
+
       bool charsResult = SetCharsAt(row, column, text);
       bool attrsResult = SetAttrAt(row, column, attrValue, text.Length);
-      
+
       return charsResult && attrsResult;
     }
 
-    public short Width {
+    public int Width {
       get => GetBufferInfo(handle).dwSize.Y;
     }
 
-    public short Height {
+    public int Height {
       get => GetBufferInfo(handle).dwSize.X;
     }
 
-    public short TextAttributes {
+    public int TextAttributes {
       get => GetBufferInfo(handle).wAttributes;
       set => SetConsoleTextAttribute(handle, (ushort)value);
     }
 
-    public IntPtr Handle {
-      get => handle;
+    public long Handle { 
+      get => handle.ToInt64();
     }
 
-    private bool GetScreenBufferModeFlag(uint bit) {
+    private bool GetMode(uint bit) {
       return ((uint)ModeState & bit) != 0;
     }
 
-    private void SetScreenBufferModeFlag(uint bit, bool value) {
+    private void SetMode(uint bit, bool value) {
       uint currentMode = (uint)ModeState;
       uint newMode = value ? (currentMode | bit) : (currentMode & ~bit);
       ModeState = (int)newMode;
@@ -174,43 +172,40 @@ namespace Console {
     public int ModeState {
       get {
         uint currentState;
-        Win32.Kernel32.GetConsoleMode(handle, out currentState);
+        GetConsoleMode(handle, out currentState);
         return (int)currentState;
       }
       set {
-        Win32.Kernel32.SetConsoleMode(handle, (uint)value);
+        SetConsoleMode(handle, (uint)value);
       }
     }
 
     public bool ProcessedOutputEnabled {
-      get { return GetScreenBufferModeFlag(ENABLE_PROCESSED_OUTPUT); }
-      set { SetScreenBufferModeFlag(ENABLE_PROCESSED_OUTPUT, value); }
+      get { return GetMode(ENABLE_PROCESSED_OUTPUT); }
+      set { SetMode(ENABLE_PROCESSED_OUTPUT, value); }
     }
 
     public bool WrapAtEOLOutputEnabled {
-      get { return GetScreenBufferModeFlag(ENABLE_WRAP_AT_EOL_OUTPUT); }
-      set { SetScreenBufferModeFlag(ENABLE_WRAP_AT_EOL_OUTPUT, value); }
+      get { return GetMode(ENABLE_WRAP_AT_EOL_OUTPUT); }
+      set { SetMode(ENABLE_WRAP_AT_EOL_OUTPUT, value); }
     }
 
     public bool VirtualTerminalProcessingEnabled {
-      get { return GetScreenBufferModeFlag(ENABLE_VIRTUAL_TERMINAL_PROCESSING); }
-      set { SetScreenBufferModeFlag(ENABLE_VIRTUAL_TERMINAL_PROCESSING, value); }
+      get { return GetMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING); }
+      set { SetMode(ENABLE_VIRTUAL_TERMINAL_PROCESSING, value); }
     }
 
     private CHAR_INFO[] pasteAreaBuffer;
-    private short pasteAreaWidth;
-    private short pasteAreaHeight;
+    private int pasteAreaWidth;
+    private int pasteAreaHeight;
 
-    public bool CopyArea(short row, short col, short height, short width, [Optional, DefaultParameterValue(0L)] long sourceScreenBufferHandle) {
+    public bool CopyArea(int row, int col, int height, int width, long sourceScreenBufferHandle) {
 
       if (width <= 0 || height <= 0) {
         return false;
       }
 
-      IntPtr screenBufferHandle = handle;
-      if (sourceScreenBufferHandle != 0L && (IntPtr)sourceScreenBufferHandle != INVALID_HANDLE_VALUE) {
-        screenBufferHandle = (IntPtr)sourceScreenBufferHandle;
-      }
+      IntPtr screenBufferHandle = (IntPtr)sourceScreenBufferHandle;
 
       pasteAreaWidth = width;
       pasteAreaHeight = height;
@@ -219,10 +214,10 @@ namespace Console {
         pasteAreaBuffer = new CHAR_INFO[width * height];
       }
 
-      COORD bufferSize = new COORD(width, height);
+      COORD bufferSize = new COORD((short)width, (short)height);
       COORD bufferCoord = new COORD(0, 0);
 
-      SMALL_RECT readRegion = new SMALL_RECT(col, row, (short)(col + width - 1), (short)(row + height - 1));
+      SMALL_RECT readRegion = new SMALL_RECT((short)col, (short)row, (short)(col + width - 1), (short)(row + height - 1));
 
       return ReadConsoleOutput(
         screenBufferHandle,
@@ -234,23 +229,20 @@ namespace Console {
 
     }
 
-    public bool PasteAreaAt(short row, short col, [Optional, DefaultParameterValue(0L)] long targetScreenBufferHandle) {
+    public bool PasteAreaAt(int row, int col, long targetScreenBufferHandle) {
 
       if (pasteAreaBuffer == null || pasteAreaBuffer.Length == 0 || pasteAreaWidth == 0 || pasteAreaHeight == 0) {
         return false;
       }
 
-      IntPtr screenBufferHandle = handle;
-      if (targetScreenBufferHandle != 0L && (IntPtr)targetScreenBufferHandle != INVALID_HANDLE_VALUE) {
-        screenBufferHandle = (IntPtr)targetScreenBufferHandle;
-      }
+      IntPtr screenBufferHandle = (IntPtr)targetScreenBufferHandle;
 
-      COORD bufferSize = new COORD(pasteAreaWidth, pasteAreaHeight);
+      COORD bufferSize = new COORD((short)pasteAreaWidth, (short)pasteAreaHeight);
       COORD bufferCoord = new COORD(0, 0);
 
       SMALL_RECT writeRegion = new SMALL_RECT(
-        col,
-        row,
+        (short)col,
+        (short)row,
         (short)(col + pasteAreaWidth - 1),
         (short)(row + pasteAreaHeight - 1)
       );
@@ -265,7 +257,7 @@ namespace Console {
 
     }
 
-    public bool SetPasteAreaContent(short width, short height, string chars, string attrsCsv, char fillChar = ' ', ushort? defaultAttrs = null) {
+    public bool SetPasteAreaContent(int width, int height, string chars, string attrsCsv, string fillChar, int defaultAttrs) {
 
       if (width <= 0 || height <= 0) {
         return false;
@@ -295,9 +287,11 @@ namespace Console {
         return false;
       }
 
+      char actualFillChar = string.IsNullOrEmpty(fillChar) ? ' ' : fillChar[0];
+
       ushort actualDefaultAttrs;
-      if (defaultAttrs.HasValue) {
-        actualDefaultAttrs = defaultAttrs.Value;
+      if (defaultAttrs != -1) {
+        actualDefaultAttrs = (ushort)defaultAttrs;
       } else {
         actualDefaultAttrs = (ushort)GetBufferInfo(handle).wAttributes;
       }
@@ -311,7 +305,7 @@ namespace Console {
         if (i < parsedChars.Length) {
           pasteAreaBuffer[i].Char.UnicodeChar = parsedChars[i];
         } else {
-          pasteAreaBuffer[i].Char.UnicodeChar = fillChar;
+          pasteAreaBuffer[i].Char.UnicodeChar = actualFillChar;
         }
 
         if (i < parsedAttrs.Length) {
@@ -325,7 +319,7 @@ namespace Console {
       return true;
     }
 
-    public bool SetPasteAreaChars(string charData, [Optional, DefaultParameterValue((short)0)] short row, [Optional, DefaultParameterValue((short)0)] short col) {
+    public bool SetPasteAreaChars(int row, int col, string charData) {
 
       if (pasteAreaBuffer == null || pasteAreaBuffer.Length == 0 || pasteAreaWidth == 0 || pasteAreaHeight == 0) {
         return false;
@@ -335,12 +329,15 @@ namespace Console {
         return false;
       }
 
-      if (row < 0 || row >= pasteAreaHeight || col < 0 || col >= pasteAreaWidth) {
+      int actualRow = row == -1 ? 0 : row;
+      int actualCol = col == -1 ? 0 : col;
+
+      if (actualRow < 0 || actualRow >= pasteAreaHeight || actualCol < 0 || actualCol >= pasteAreaWidth) {
         return false;
       }
 
-      int startIndex = (row * pasteAreaWidth) + col;
-      int charsFitOnRow = pasteAreaWidth - col;
+      int startIndex = (actualRow * pasteAreaWidth) + actualCol;
+      int charsFitOnRow = pasteAreaWidth - actualCol;
 
       int charsToWrite = Math.Min(charData.Length, charsFitOnRow);
       for (int i = 0; i < charsToWrite; i++) {
@@ -348,6 +345,73 @@ namespace Console {
       }
 
       return true;
+    }
+
+    public bool SetArea(int row, int col, int height, int width, string character, int attributes) {
+
+      if (width < 1 || height < 1 || col < 0 || row < 0) return false;
+
+      var writeRegion = new SMALL_RECT {
+        Left = (short)col,
+        Top = (short)row,
+        Right = (short)(col + width - 1),
+        Bottom = (short)(row + height - 1)
+      };
+
+      var bufferSize = new COORD { X = (short)width, Y = (short)height };
+      var bufferCoord = new COORD { X = 0, Y = 0 };
+      var buffer = new CHAR_INFO[width * height];
+
+      char charToUse = string.IsNullOrEmpty(character) ? '|' : character[0];
+
+      if (attributes != -1) {
+        var fillCell = new CHAR_INFO {
+          Char = new CHAR_INFO_UNION { UnicodeChar = charToUse },
+          Attributes = (ushort)attributes
+        };
+
+        for (int i = 0; i < buffer.Length; i++) {
+          buffer[i] = fillCell;
+        }
+
+        return WriteConsoleOutput(handle, buffer, bufferSize, bufferCoord, ref writeRegion);
+      } else {
+
+        if (!ReadConsoleOutput(handle, buffer, bufferSize, bufferCoord, ref writeRegion)) {
+          return false;
+        }
+
+        for (int i = 0; i < buffer.Length; i++) {
+          buffer[i].Char.UnicodeChar = charToUse;
+        }
+
+        return WriteConsoleOutput(handle, buffer, bufferSize, bufferCoord, ref writeRegion);
+      }
+    }
+
+    public bool SetAreaAttribute(int row, int col, int height, int width, int attributes) {
+      if (width < 1 || height < 1 || col < 0 || row < 0) return false;
+
+      var readRegion = new SMALL_RECT {
+        Left = (short)col,
+        Top = (short)row,
+        Right = (short)(col + width - 1),
+        Bottom = (short)(row + height - 1)
+      };
+
+      var bufferSize = new COORD { X = (short)width, Y = (short)height };
+      var bufferCoord = new COORD { X = 0, Y = 0 };
+      var buffer = new CHAR_INFO[width * height];
+
+      if (!ReadConsoleOutput(handle, buffer, bufferSize, bufferCoord, ref readRegion)) {
+        return false;
+      }
+
+      for (int i = 0; i < buffer.Length; i++) {
+        buffer[i].Attributes = (ushort)attributes;
+      }
+
+      return WriteConsoleOutput(handle, buffer, bufferSize, bufferCoord, ref readRegion);
     }
 
   }
