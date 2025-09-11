@@ -239,6 +239,7 @@ namespace Win32 {
     internal const uint ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002;
     internal const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
     internal const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
+    internal const uint ENABLE_LVB_GRID_WORLDWIDE = 0x0010;
 
     internal const uint KEY_EVENT = 0x0001;
     internal const uint MOUSE_EVENT = 0x0002;
@@ -330,13 +331,22 @@ namespace Win32 {
         }
     }
 
-        internal struct KEY_EVENT_RECORD {
-        public int bKeyDown; 
-        public ushort wRepeatCount; 
-        public ushort wVirtualKeyCode; 
-        public ushort wVirtualScanCode; 
-        public char UnicodeChar; 
-        public uint dwControlKeyState; 
+        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
+    internal struct KEY_EVENT_RECORD {
+        [FieldOffset(0)]
+        public int bKeyDown;
+        [FieldOffset(4)]
+        public ushort wRepeatCount;
+        [FieldOffset(6)]
+        public ushort wVirtualKeyCode;
+        [FieldOffset(8)]
+        public ushort wVirtualScanCode;
+        [FieldOffset(10)]
+        public char UnicodeChar;
+        [FieldOffset(10)]
+        public byte AsciiChar;
+        [FieldOffset(12)]
+        public uint dwControlKeyState;
     }
 
     

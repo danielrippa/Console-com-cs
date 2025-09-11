@@ -124,16 +124,45 @@ namespace Console {
 
         private object GetKeyEventDetails(KEY_EVENT_RECORD keyEventRecord) {
             var controlKeyState = keyEventRecord.dwControlKeyState;
+            bool ctrlPressed = ((controlKeyState & (uint)ControlKeyState.LEFT_CTRL_PRESSED) != 0 || (controlKeyState & (uint)ControlKeyState.RIGHT_CTRL_PRESSED) != 0);
+            string unicodeChar;
+
+            if (ctrlPressed && keyEventRecord.wVirtualKeyCode >= 0x41 && keyEventRecord.wVirtualKeyCode <= 0x5A) {
+                unicodeChar = ((char)keyEventRecord.wVirtualKeyCode).ToString();
+            } else {
+                unicodeChar = keyEventRecord.UnicodeChar == '\0' ? "" : keyEventRecord.UnicodeChar.ToString();
+            }
+
+            string character = "";
+            ushort keyCode = keyEventRecord.wVirtualKeyCode;
+            string keyType = GetKeyType(keyCode);
+            bool shiftPressed = (controlKeyState & (uint)ControlKeyState.SHIFT_PRESSED) != 0;
+
+            switch (keyType) {
+                case "alphabetic":
+                    char c = (char)keyCode;
+                    if (!shiftPressed) {
+                        c = char.ToLower(c);
+                    }
+                    character = c.ToString();
+                    break;
+                case "numeric":
+                    character = ((char)keyCode).ToString();
+                    break;
+            }
+
             return new {
                 type = keyEventRecord.bKeyDown != 0 ? "KeyPressed" : "KeyReleased",
                 scanCode = keyEventRecord.wVirtualScanCode,
                 keyCode = keyEventRecord.wVirtualKeyCode,
-                unicodeChar = keyEventRecord.UnicodeChar == '\0' ? "" : keyEventRecord.UnicodeChar.ToString(),
+                unicodeChar = unicodeChar,
+                asciiChar = keyEventRecord.AsciiChar,
+                character = character,
                 unicodeCharCode = (int)keyEventRecord.UnicodeChar,
                 repetitions = (int)keyEventRecord.wRepeatCount,
-                keyType = GetKeyType(keyEventRecord.wVirtualKeyCode),
-                shiftPressed = (controlKeyState & (uint)ControlKeyState.SHIFT_PRESSED) != 0,
-                ctrlPressed = ((controlKeyState & (uint)ControlKeyState.LEFT_CTRL_PRESSED) != 0 || (controlKeyState & (uint)ControlKeyState.RIGHT_CTRL_PRESSED) != 0),
+                keyType = keyType,
+                shiftPressed = shiftPressed,
+                ctrlPressed = ctrlPressed,
                 altPressed = ((controlKeyState & (uint)ControlKeyState.LEFT_ALT_PRESSED) != 0 || (controlKeyState & (uint)ControlKeyState.RIGHT_ALT_PRESSED) != 0),
                 controlKeys = GetControlKeysDetails(controlKeyState)
             };

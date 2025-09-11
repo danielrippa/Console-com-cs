@@ -199,6 +199,18 @@ namespace Console {
       set { SetMode(DISABLE_NEWLINE_AUTO_RETURN, !value); }
     }
 
+    public bool LvbGridWorldwideEnabled {
+      get { return GetMode(ENABLE_LVB_GRID_WORLDWIDE); }
+      set { SetMode(ENABLE_LVB_GRID_WORLDWIDE, value); }
+    }
+
+    public void SetTerminalMode(bool enable) {
+      VirtualTerminalProcessingEnabled = enable;
+      if (enable) {
+        ProcessedOutputEnabled = true;
+      }
+    }
+
     private CHAR_INFO[] pasteAreaBuffer;
     private int pasteAreaWidth;
     private int pasteAreaHeight;

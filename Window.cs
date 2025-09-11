@@ -104,7 +104,7 @@ namespace Console {
 
     }
 
-    public int OutputCodePage {
+    public int CodePage {
       get => (int)GetConsoleOutputCP();
       set => SetConsoleOutputCP((uint)value);
     }
