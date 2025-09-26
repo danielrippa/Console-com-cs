@@ -19,7 +19,7 @@ namespace Console {
       handle = GetStdHandle(STD_OUTPUT_HANDLE);
     }
 
-    public static IntPtr CreateScreenBufferHandle() {
+    public IntPtr CreateScreenBufferHandle() {
       return CreateConsoleScreenBuffer(
           GENERIC_READ | GENERIC_WRITE,
           FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -29,13 +29,9 @@ namespace Console {
       );
     }
 
-    public bool Activate() {
+    public bool ActivateScreenBuffer(long screenBufferHandle) {
+      IntPtr handle = new IntPtr(screenBufferHandle);
       return SetConsoleActiveScreenBuffer(handle);
-    }
-
-    public bool IsActive() {
-      IntPtr activeHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-      return handle == activeHandle;
     }
 
     public bool Close() {
@@ -141,11 +137,48 @@ namespace Console {
     }
 
     public int Width {
-      get => GetBufferInfo(handle).dwSize.Y;
+      get => GetBufferInfo(handle).dwSize.X;
     }
 
     public int Height {
-      get => GetBufferInfo(handle).dwSize.X;
+      get => GetBufferInfo(handle).dwSize.Y;
+    }
+
+    public bool Resize(int width, int height, bool resizeWindow) {
+      if (width <= 0 || height <= 0) {
+        return false;
+      }
+
+      if (!resizeWindow) {
+        COORD newSize = new COORD((short)width, (short)height);
+        return SetConsoleScreenBufferSize(handle, newSize);
+      }
+
+      SMALL_RECT targetWindow = new SMALL_RECT(0, 0, (short)(width - 1), (short)(height - 1));
+      COORD targetBuffer = new COORD((short)width, (short)height);
+
+      CONSOLE_SCREEN_BUFFER_INFO info = GetBufferInfo(handle);
+
+      if (targetBuffer.X < info.dwSize.X || targetBuffer.Y < info.dwSize.Y) {
+        if (!SetConsoleWindowInfo(handle, true, ref targetWindow)) {
+          return false;
+        }
+        return SetConsoleScreenBufferSize(handle, targetBuffer);
+      }
+      else {
+        if (!SetConsoleScreenBufferSize(handle, targetBuffer)) {
+          return false;
+        }
+        return SetConsoleWindowInfo(handle, true, ref targetWindow);
+      }
+    }
+
+    public bool ResizeToWindow() {
+      CONSOLE_SCREEN_BUFFER_INFO info = GetBufferInfo(handle);
+      SMALL_RECT window = info.srWindow;
+      short width = (short)(window.Right - window.Left + 1);
+      short height = (short)(window.Bottom - window.Top + 1);
+      return Resize(width, height, false);
     }
 
     public int TextAttributes {

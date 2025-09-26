@@ -34,7 +34,7 @@ namespace Console {
           return false;
         } else {
           var info = GetBufferInfoEx(handle);
-          info.ColorTable[index] = (uint)(((byte)r << 16) | ((byte)g << 8) | (byte)b);
+          info.ColorTable[index] = (uint)(((byte)b << 16) | ((byte)g << 8) | (byte)r);
           return SetBufferInfoEx(handle, info);
         }
       }
@@ -45,9 +45,9 @@ namespace Console {
         } else {
           uint color = GetBufferInfoEx(handle).ColorTable[index];
 
-          short r = (short)((color >> 16) & 0xFF);
+          short r = (short)(color & 0xFF);
           short g = (short)((color >> 8) & 0xFF);
-          short b = (short)(color & 0xFF);
+          short b = (short)((color >> 16) & 0xFF);
 
           return $"{r},{g},{b}";
         }
@@ -58,9 +58,9 @@ namespace Console {
         var colors = new string[16];
         for (int i = 0; i < 16; i++) {
           uint color = info.ColorTable[i];
-          short r = (short)((color >> 16) & 0xFF);
+          short r = (short)(color & 0xFF);
           short g = (short)((color >> 8) & 0xFF);
-          short b = (short)(color & 0xFF);
+          short b = (short)((color >> 16) & 0xFF);
           colors[i] = $"{r},{g},{b}";
         }
         return string.Join(";", colors);
@@ -78,7 +78,7 @@ namespace Console {
           if (!short.TryParse(rgb[0], out short r)) return false;
           if (!short.TryParse(rgb[1], out short g)) return false;
           if (!short.TryParse(rgb[2], out short b)) return false;
-          info.ColorTable[i] = (uint)(((byte)r << 16) | ((byte)g << 8) | (byte)b);
+          info.ColorTable[i] = (uint)(((byte)b << 16) | ((byte)g << 8) | (byte)r);
         }
 
         return SetBufferInfoEx(handle, info);

@@ -39,7 +39,7 @@ namespace Console {
     public int Right {
       get => Window.Right;
     }
-    
+
     public int Bottom {
       get => Window.Bottom;
     }
@@ -63,13 +63,13 @@ namespace Console {
     public bool MoveTo(int row, int column) {
       try {
         var info = GetBufferInfo(handle);
-        
+
         column = Math.Max(0, column);
         row = Math.Max(0, row);
-        
+
         int maxLeft = Math.Max(0, info.dwSize.X - Width);
         int maxTop = Math.Max(0, info.dwSize.Y - Height);
-        
+
         column = Math.Min(column, maxLeft);
         row = Math.Min(row, maxTop);
 
@@ -96,7 +96,31 @@ namespace Console {
       };
       return SetConsoleWindowInfo(handle, true, ref rect);
     }
-    
+
+    public bool Resize(int height, int width) {
+      if (width <= 0 || height <= 0) {
+        return false;
+      }
+
+      try {
+        var info = GetBufferInfo(handle);
+
+        width = Math.Min(width, info.dwMaximumWindowSize.X);
+        height = Math.Min(height, info.dwMaximumWindowSize.Y);
+
+        var rect = new SMALL_RECT {
+          Left = info.srWindow.Left,
+          Top = info.srWindow.Top,
+          Right = (short)(info.srWindow.Left + width - 1),
+          Bottom = (short)(info.srWindow.Top + height - 1)
+        };
+
+        return SetConsoleWindowInfo(handle, true, ref rect);
+      } catch (Exception) {
+        return false;
+      }
+    }
+
   }
 
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Web.Script.Serialization;
 
 using Win32;
@@ -56,6 +57,26 @@ namespace Console {
                     break;
             }
             return Serialize(eventDetails);
+        }
+
+        public string ReadTextInput(int timeoutMilliseconds) {
+            uint waitResult = WaitForSingleObject(inputHandle, (uint)timeoutMilliseconds);
+
+            if (waitResult == WAIT_OBJECT_0) {
+                byte[] buffer = new byte[256];
+                uint bytesRead = 0;
+
+                if (ReadFile(inputHandle, buffer, (uint)buffer.Length, out bytesRead, IntPtr.Zero)) {
+                    string text = Encoding.Default.GetString(buffer, 0, (int)bytesRead);
+                    return Serialize(new { value = text });
+                } else {
+                    return Serialize(new { error = new { type = "ReadError", code = Marshal.GetLastWin32Error() } });
+                }
+            } else if (waitResult == WAIT_TIMEOUT) {
+                return Serialize(new { error = "Timeout" });
+            } else {
+                return Serialize(new { error = new { type = "WaitError", code = waitResult } });
+            }
         }
 
         private bool GetConsoleMode(uint bit) {
@@ -130,7 +151,7 @@ namespace Console {
             if (ctrlPressed && keyEventRecord.wVirtualKeyCode >= 0x41 && keyEventRecord.wVirtualKeyCode <= 0x5A) {
                 unicodeChar = ((char)keyEventRecord.wVirtualKeyCode).ToString();
             } else {
-                unicodeChar = keyEventRecord.UnicodeChar == '\0' ? "" : keyEventRecord.UnicodeChar.ToString();
+                unicodeChar = keyEventRecord.UnicodeChar == ' ' ? "" : keyEventRecord.UnicodeChar.ToString();
             }
 
             string character = "";

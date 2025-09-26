@@ -59,10 +59,10 @@ namespace Win32 {
       public short Bottom;
 
       public SMALL_RECT(short Left, short Top, short Right, short Bottom) {
-          this.Left = Left;
-          this.Top = Top;
-          this.Right = Right;
-          this.Bottom = Bottom;
+        this.Left = Left;
+        this.Top = Top;
+        this.Right = Right;
+        this.Bottom = Bottom;
       }
     }
 
@@ -87,16 +87,16 @@ namespace Win32 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct CONSOLE_SCREEN_BUFFER_INFOEX
     {
-        public uint cbSize;
-        public COORD dwSize;
-        public COORD dwCursorPosition;
-        public short wAttributes;
-        public SMALL_RECT srWindow;
-        public COORD dwMaximumWindowSize;
-        public short wPopupAttributes;
-        public int bFullscreenSupported; 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        public uint[] ColorTable;
+      public uint cbSize;
+      public COORD dwSize;
+      public COORD dwCursorPosition;
+      public short wAttributes;
+      public SMALL_RECT srWindow;
+      public COORD dwMaximumWindowSize;
+      public short wPopupAttributes;
+      public int bFullscreenSupported; 
+      [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+      public uint[] ColorTable;
     }
 
     [DllImport(Dll, SetLastError = true)]
@@ -111,10 +111,9 @@ namespace Win32 {
       infoEx.cbSize = (uint)Marshal.SizeOf(typeof(CONSOLE_SCREEN_BUFFER_INFOEX));
       infoEx.ColorTable = new uint[16];
 
-      if (!GetConsoleScreenBufferInfoEx(handle, ref infoEx))
-      {
-          int error = Marshal.GetLastWin32Error();
-          throw new System.ComponentModel.Win32Exception(error, $"Failed to get console screen buffer info extended. Error: {error}");
+      if (!GetConsoleScreenBufferInfoEx(handle, ref infoEx)) {
+        int error = Marshal.GetLastWin32Error();
+        throw new System.ComponentModel.Win32Exception(error, $"Failed to get console screen buffer info extended. Error: {error}");
       }
 
       short winWidth = (short)(infoEx.srWindow.Right - infoEx.srWindow.Left + 1);
@@ -167,11 +166,11 @@ namespace Win32 {
 
     [DllImport(Dll, SetLastError = true)]
     public static extern bool WriteConsoleOutputAttribute(
-        IntPtr hConsoleOutput,
-        ushort[] lpAttribute,
-        uint nLength,
-        COORD dwWriteCoord,
-        out uint lpNumberOfAttrsWritten
+      IntPtr hConsoleOutput,
+      ushort[] lpAttribute,
+      uint nLength,
+      COORD dwWriteCoord,
+      out uint lpNumberOfAttrsWritten
     );
 
     [DllImport(Dll)]
@@ -246,6 +245,9 @@ namespace Win32 {
     internal const uint WINDOW_BUFFER_SIZE_EVENT = 0x0004;
     internal const uint FOCUS_EVENT = 0x0010;
 
+    internal const uint WAIT_OBJECT_0 = 0x00000000;
+    internal const uint WAIT_TIMEOUT = 0x00000102;
+
     internal const uint MOUSE_MOVED = 0x0001;
     internal const uint DOUBLE_CLICK = 0x0002;
     internal const uint MOUSE_WHEELED = 0x0004;
@@ -262,17 +264,16 @@ namespace Win32 {
     internal const uint SHIFT_PRESSED = 0x0010;
 
     [Flags]
-    public enum ControlKeyState : uint
-    {
-        RIGHT_ALT_PRESSED = 0x0001,
-        LEFT_ALT_PRESSED = 0x0002,
-        RIGHT_CTRL_PRESSED = 0x0004,
-        LEFT_CTRL_PRESSED = 0x0008,
-        SHIFT_PRESSED = 0x0010,
-        NUMLOCK_ON = 0x0020,
-        SCROLLLOCK_ON = 0x0040,
-        CAPSLOCK_ON = 0x0080,
-        ENHANCED_KEY = 0x0100
+    public enum ControlKeyState : uint {
+      RIGHT_ALT_PRESSED = 0x0001,
+      LEFT_ALT_PRESSED = 0x0002,
+      RIGHT_CTRL_PRESSED = 0x0004,
+      LEFT_CTRL_PRESSED = 0x0008,
+      SHIFT_PRESSED = 0x0010,
+      NUMLOCK_ON = 0x0020,
+      SCROLLLOCK_ON = 0x0040,
+      CAPSLOCK_ON = 0x0080,
+      ENHANCED_KEY = 0x0100
     }
 
     internal const uint FROM_LEFT_1ST_BUTTON_PRESSED = 0x0001;
@@ -296,6 +297,19 @@ namespace Win32 {
     [DllImport(Dll)]
     internal static extern bool ReadConsoleInput(IntPtr hConsoleInput, ref INPUT_RECORD lpBuffer, uint nLength, ref uint lpNumberOfEventsRead);
 
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+    [DllImport(Dll, SetLastError = true)]
+    internal static extern bool ReadFile(
+      IntPtr hFile,
+      [Out] byte[] lpBuffer,
+      uint nNumberOfBytesToRead,
+      out uint lpNumberOfBytesRead,
+      IntPtr lpOverlapped
+    );
+
+
     [DllImport(Dll)]
     internal static extern uint GetConsoleCP();
 
@@ -309,74 +323,69 @@ namespace Win32 {
     internal static extern bool SetConsoleOutputCP(uint wCodePageID);
 
     [StructLayout(LayoutKind.Explicit)]
-    internal struct INPUT_RECORD
-    {
+    internal struct INPUT_RECORD {
+      [FieldOffset(0)]
+      public ushort EventType;
+      [FieldOffset(4)]
+      public EventUnion Event;
+
+      [StructLayout(LayoutKind.Explicit)]
+      internal struct EventUnion{
         [FieldOffset(0)]
-        public ushort EventType; 
-
-        [FieldOffset(4)] 
-        public EventUnion Event;
-
-        [StructLayout(LayoutKind.Explicit)]
-        internal struct EventUnion
-        {
-            [FieldOffset(0)]
-            public KEY_EVENT_RECORD KeyEvent;
-            [FieldOffset(0)]
-            public MOUSE_EVENT_RECORD MouseEvent;
-            [FieldOffset(0)]
-            public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-            [FieldOffset(0)]
-            public FOCUS_EVENT_RECORD FocusEvent;
-        }
+        public KEY_EVENT_RECORD KeyEvent;
+        [FieldOffset(0)]
+        public MOUSE_EVENT_RECORD MouseEvent;
+        [FieldOffset(0)]
+        public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+        [FieldOffset(0)]
+        public FOCUS_EVENT_RECORD FocusEvent;
+      }
     }
 
-        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
     internal struct KEY_EVENT_RECORD {
-        [FieldOffset(0)]
-        public int bKeyDown;
-        [FieldOffset(4)]
-        public ushort wRepeatCount;
-        [FieldOffset(6)]
-        public ushort wVirtualKeyCode;
-        [FieldOffset(8)]
-        public ushort wVirtualScanCode;
-        [FieldOffset(10)]
-        public char UnicodeChar;
-        [FieldOffset(10)]
-        public byte AsciiChar;
-        [FieldOffset(12)]
-        public uint dwControlKeyState;
+      [FieldOffset(0)]
+      public int bKeyDown;
+      [FieldOffset(4)]
+      public ushort wRepeatCount;
+      [FieldOffset(6)]
+      public ushort wVirtualKeyCode;
+      [FieldOffset(8)]
+      public ushort wVirtualScanCode;
+      [FieldOffset(10)]
+      public char UnicodeChar;
+      [FieldOffset(10)]
+      public byte AsciiChar;
+      [FieldOffset(12)]
+      public uint dwControlKeyState;
     }
-
-    
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct MOUSE_EVENT_RECORD {
-        public COORD dwMousePosition;
-        public uint dwButtonState;
-        public uint dwControlKeyState;
-        public uint dwEventFlags;
+      public COORD dwMousePosition;
+      public uint dwButtonState;
+      public uint dwControlKeyState;
+      public uint dwEventFlags;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct WINDOW_BUFFER_SIZE_RECORD {
-        public COORD dwSize;
+      public COORD dwSize;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct FOCUS_EVENT_RECORD {
-        public int bSetFocus; 
+      public int bSetFocus;
     }
 
     internal static ushort HiWord(int dword) {
-        return (ushort)((dword >> 16) & 0xFFFF);
+      return (ushort)((dword >> 16) & 0xFFFF);
     }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct CONSOLE_CURSOR_INFO {
-        public uint dwSize;
-        public bool bVisible;
+      public uint dwSize;
+      public bool bVisible;
     }
 
     [DllImport(Dll, SetLastError = true)]
@@ -389,13 +398,13 @@ namespace Win32 {
     internal static extern bool SetConsoleCursorInfo(IntPtr hConsoleOutput, ref CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
 
     internal static CONSOLE_CURSOR_INFO GetCursorInfo(IntPtr handle) {
-        GetConsoleCursorInfo(handle, out var info);
-        return info;
+      GetConsoleCursorInfo(handle, out var info);
+      return info;
     }
 
     internal static CONSOLE_SCREEN_BUFFER_INFO GetScreenBufferInfo(IntPtr handle) {
-        GetConsoleScreenBufferInfo(handle, out var info);
-        return info;
+      GetConsoleScreenBufferInfo(handle, out var info);
+      return info;
     }
 
     [DllImport(Dll, SetLastError = true)]

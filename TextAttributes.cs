@@ -1,3 +1,4 @@
+
 using System;
 using System.Runtime.InteropServices;
 using static Win32.Kernel32;
@@ -36,10 +37,12 @@ namespace Console {
       return Value;
     }
 
-    public short SetAll(bool inkRed = false, bool inkGreen = false, bool inkBlue = false, bool inkIntensity = false,
-                                bool paperRed = false, bool paperGreen = false, bool paperBlue = false, bool paperIntensity = false,
-                                bool borderTop = false, bool borderLeft = false, bool borderBottom = false, bool borderRight = false,
-                                bool inverted = false) {
+    public short SetAll(
+        bool inkRed = false, bool inkGreen = false, bool inkBlue = false, bool inkIntensity = false,
+        bool paperRed = false, bool paperGreen = false, bool paperBlue = false, bool paperIntensity = false,
+        bool borderTop = false, bool borderLeft = false, bool borderBottom = false, bool borderRight = false,
+        bool inverted = false) {
+
       Value = ApplyTextColor(Value, inkRed, inkGreen, inkBlue, inkIntensity, 0);
       Value = ApplyTextColor(Value, paperRed, paperGreen, paperBlue, paperIntensity, 4);
       Value = ApplyTextBorders(Value, borderTop, borderLeft, borderBottom, borderRight);
@@ -48,33 +51,33 @@ namespace Console {
     }
 
     public short EnableInkBits(bool red = false, bool green = false, bool blue = false, bool intensity = false) {
-      if (red) Value = SetBit(Value, 2 + 0, true);
+      if (red) Value = SetBit(Value, 0 + 0, true);
       if (green) Value = SetBit(Value, 1 + 0, true);
-      if (blue) Value = SetBit(Value, 0 + 0, true);
+      if (blue) Value = SetBit(Value, 2 + 0, true);
       if (intensity) Value = SetBit(Value, 3 + 0, true);
       return Value;
     }
 
     public short DisableInkBits(bool red = false, bool green = false, bool blue = false, bool intensity = false) {
-      if (red) Value = SetBit(Value, 2 + 0, false);
+      if (red) Value = SetBit(Value, 0 + 0, false);
       if (green) Value = SetBit(Value, 1 + 0, false);
-      if (blue) Value = SetBit(Value, 0 + 0, false);
+      if (blue) Value = SetBit(Value, 2 + 0, false);
       if (intensity) Value = SetBit(Value, 3 + 0, false);
       return Value;
     }
 
     public short EnablePaperBits(bool red = false, bool green = false, bool blue = false, bool intensity = false) {
-      if (red) Value = SetBit(Value, 2 + 4, true);
+      if (red) Value = SetBit(Value, 0 + 4, true);
       if (green) Value = SetBit(Value, 1 + 4, true);
-      if (blue) Value = SetBit(Value, 0 + 4, true);
+      if (blue) Value = SetBit(Value, 2 + 4, true);
       if (intensity) Value = SetBit(Value, 3 + 4, true);
       return Value;
     }
 
     public short DisablePaperBits(bool red = false, bool green = false, bool blue = false, bool intensity = false) {
-      if (red) Value = SetBit(Value, 2 + 4, false);
+      if (red) Value = SetBit(Value, 0 + 4, false);
       if (green) Value = SetBit(Value, 1 + 4, false);
-      if (blue) Value = SetBit(Value, 0 + 4, false);
+      if (blue) Value = SetBit(Value, 2 + 4, false);
       if (intensity) Value = SetBit(Value, 3 + 4, false);
       return Value;
     }
@@ -112,9 +115,9 @@ namespace Console {
 
     private short ApplyTextColor(short value, bool red, bool green, bool blue, bool intensity, int offset) {
       value = SetBit(value, 3 + offset, intensity);
-      value = SetBit(value, 2 + offset, red);
+      value = SetBit(value, 0 + offset, red);
       value = SetBit(value, 1 + offset, green);
-      value = SetBit(value, 0 + offset, blue);
+      value = SetBit(value, 2 + offset, blue);
       return value;
     }
 

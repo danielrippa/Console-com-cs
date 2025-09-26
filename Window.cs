@@ -14,15 +14,8 @@ namespace Console {
   public class Window {
 
     private const int MAX_TITLE_LENGTH = 255;
-    private IntPtr handle;
-
-    public long Handle {
-        get => handle.ToInt64();
-        set => handle = new IntPtr(value);
-    }
 
     public Window() {
-      handle = GetStdOutHandle();
     }
 
     public string Title {
@@ -45,63 +38,74 @@ namespace Console {
 
     public int Width {
       get {
+        IntPtr handle = GetStdOutHandle();
         var info = GetBufferInfo(handle);
         return info.srWindow.Right - info.srWindow.Left + 1;
       }
       set {
+        IntPtr handle = GetStdOutHandle();
         var info = GetBufferInfo(handle);
-        Resize(value, info.srWindow.Bottom - info.srWindow.Top + 1);
+        Resize(info.srWindow.Bottom - info.srWindow.Top + 1, value);
       }
     }
 
     public int Height {
       get {
+        IntPtr handle = GetStdOutHandle();
         var info = GetBufferInfo(handle);
         return info.srWindow.Bottom - info.srWindow.Top + 1;
       }
       set {
+        IntPtr handle = GetStdOutHandle();
         var info = GetBufferInfo(handle);
-        Resize(info.srWindow.Right - info.srWindow.Left + 1, value);
+        Resize(value, info.srWindow.Right - info.srWindow.Left + 1);
       }
     }
 
     public bool Resize(int height, int width) {
-
-      if (width <= 0 || height <= 0) {
-        return false;
-      }
+      if (width <= 0 || height <= 0) { return false; }
 
       try {
+        IntPtr handle = GetStdOutHandle();
         var info = GetBufferInfo(handle);
 
-        width = Math.Min(width, info.dwMaximumWindowSize.X);
-        height = Math.Min(height, info.dwMaximumWindowSize.Y);
+        if (width > info.dwMaximumWindowSize.X || height > info.dwMaximumWindowSize.Y) { return false; }
 
-        var bufferSize = new COORD {
-          X = (short)Math.Max(width, info.dwSize.X),
-          Y = (short)Math.Max(height, info.dwSize.Y)
-        };
+        short currentWidth = (short)(info.srWindow.Right - info.srWindow.Left + 1);
+        short currentHeight = (short)(info.srWindow.Bottom - info.srWindow.Top + 1);
 
-        if (!SetConsoleScreenBufferSize(handle, bufferSize)) {
-          return false;
-        }
+        var newSize = new COORD((short)width, (short)height);
+        var newWindowRect = new SMALL_RECT { Left = 0, Top = 0, Right = (short)(width - 1), Bottom = (short)(height - 1) };
 
-        var rect = new SMALL_RECT {
-          Left = 0,
-          Top = 0,
-          Right = (short)(width - 1),
-          Bottom = (short)(height - 1)
-        };
-
-        if (!SetConsoleWindowInfo(handle, true, ref rect)) {
-          return false;
+        if (width > currentWidth || height > currentHeight) {
+          if (!SetConsoleScreenBufferSize(handle, newSize)) { return false; }
+          if (!SetConsoleWindowInfo(handle, true, ref newWindowRect)) {
+            SetConsoleScreenBufferSize(handle, info.dwSize);
+            return false;
+          }
+        } else {
+          if (!SetConsoleWindowInfo(handle, true, ref newWindowRect)) { return false; }
+          if (!SetConsoleScreenBufferSize(handle, newSize)) {
+            SetConsoleWindowInfo(handle, true, ref info.srWindow);
+            SetConsoleScreenBufferSize(handle, info.dwSize);
+            return false;
+          }
         }
 
         return true;
-      } catch (Exception) {
-        return false;
-      }
+      } catch (Exception) { return false; }
+    }
 
+    public bool ResizeScreenBufferToWindow(long screenBufferHandle) {
+      IntPtr handle = new IntPtr(screenBufferHandle);
+
+      int windowWidth = this.Width;
+      int windowHeight = this.Height;
+
+      if (windowWidth <= 0 || windowHeight <= 0) { return false; }
+
+      COORD newBufferSize = new COORD((short)windowWidth, (short)windowHeight);
+      return SetConsoleScreenBufferSize(handle, newBufferSize);
     }
 
     public int CodePage {
